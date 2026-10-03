@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
+import LogoutButton from "@/components/LogoutButton";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -68,14 +69,24 @@ export default async function DashboardPage() {
 
           <div
             style={{
-              padding: "10px 16px",
-              borderRadius: "12px",
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              color: "#c4b5fd",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
             }}
           >
-            مدیر سیستم
+            <div
+              style={{
+                padding: "10px 16px",
+                borderRadius: "12px",
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#c4b5fd",
+              }}
+            >
+              مدیر سیستم
+            </div>
+
+            <LogoutButton />
           </div>
         </header>
 
