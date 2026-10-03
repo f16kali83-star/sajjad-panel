@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ServerStatus {
+  ONLINE
+  OFFLINE
+  UNKNOWN
+}
+
+enum ConfigStatus {
+  ACTIVE
+  DISABLED
+  EXPIRED
+  REVOKED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  DISABLED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  username      String         @unique
+  passwordHash  String
+  role          UserRole       @default(USER)
+  status        UserStatus     @default(ACTIVE)
+
+  sessions      Session[]
+  configs       Config[]
+  subscriptions Subscription[]
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Server {
+  id          String       @id @default(cuid())
+  name        String
+  host        String
+  port        Int          @default(22)
+  status      ServerStatus @default(UNKNOWN)
+
+  nodes       Node[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Node {
+  id          String   @id @default(cuid())
+  name        String
+  protocol    String
+  transport   String?
+  address     String
+  port        Int
+
+  serverId    String?
+  server      Server?  @relation(fields: [serverId], references: [id], onDelete: SetNull)
+
+  configs     Config[]
+
+  enabled     Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Config {
+  id            String       @id @default(cuid())
+  name          String
+
+  protocol      String
+  transport     String?
+  configData    Json
+
+  status        ConfigStatus @default(ACTIVE)
+
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  nodeId        String?
+  node          Node?        @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+
+  expiresAt     DateTime?
+  trafficLimit  BigInt?
+  trafficUsed   BigInt       @default(0)
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+model Subscription {
+  id            String             @id @default(cuid())
+  name          String
+  token         String             @unique
+
+  status        SubscriptionStatus @default(ACTIVE)
+
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt     DateTime?
+  trafficLimit  BigInt?
+  trafficUsed   BigInt              @default(0)
+
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
